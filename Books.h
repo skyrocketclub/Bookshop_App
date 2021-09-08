@@ -28,6 +28,7 @@ public:
     void buy_book(std::string title);
     void edit_review(std::string title);
     void read_review(std::string title);
+    std::vector <std::string>  is_substr(std::string);
 
     void display_menu();
     void list_books();

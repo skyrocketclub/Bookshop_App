@@ -173,6 +173,66 @@ void Books::update_copies(string title) {
     std::rename("temp.txt", "record.txt");
 }
 
+std::vector <std::string> Books::is_substr(std::string search_title) {
+        
+    string title_val;
+    string author;
+    string review;
+    string publisher;
+    string line;
+    string price;
+    string copies;
+    vector <string> clues;
+    bool status = false;
+
+    ifstream in_file;
+
+    in_file.open("record.txt");
+    if (!in_file) {
+        cerr << "Error Opening file" << endl;
+    }
+
+    while (std::getline(in_file, line)) {
+
+        stringstream s_stream(line);
+        string substr;
+        vector<string> result;
+
+        while (s_stream.good()) {
+            std::getline(s_stream, substr, ',');
+            result.push_back(substr);
+        }
+        title_val = result.at(0);
+        author = result.at(1);
+        review = result.at(2);
+        publisher = result.at(3);
+        price = result.at(4);
+        copies = result.at(5);
+
+        int m = search_title.length();
+        int n = title_val.length();
+        int num{0};
+
+        for (int i = 0; i <= n - m; i++) {
+            for (int j{ 0 }; j < m; j++) {
+                if (title_val[j] != search_title[j]) {
+                    break;
+                } 
+                num++;
+            }
+            if (num == m) {
+                status = true;
+                clues.push_back(title_val);
+            }
+            
+        }
+      
+    }
+
+    in_file.close();
+    return clues;
+}
+
 void Books::display_menu() {
     if (option != 'q') {
         std::cout << "\na -- Add Books\nl -- Get List of books in stock\ns -- Search for a book (Buy & Review Book)\nq -- Quit Application\n";
@@ -233,8 +293,8 @@ void Books::list_books() {
         cerr << "Error opening file" << endl;
     }
 
-    cout << setw(10) << "BOOK TITLE" << setw(21) << "AUTHOR" << setw(33) << "COPIES IN STOCK" << endl;
-    std::cout << "================================================================="<<std::endl;
+    cout << setw(10) << "BOOK TITLE" << setw(21) << "AUTHOR" << setw(33) << "COPIES IN STOCK" << setw(13)<<"PRICE" << endl;
+    std::cout << "==============================================================================="<<std::endl;
                   
                   
     while (std::getline(in_file, line)) {
@@ -262,7 +322,7 @@ void Books::list_books() {
             std::getline(s_stream, substr, ',');
             result.push_back(substr);
         }
-        std::cout << std::setw(25) << left << result.at(0) << "by " << std::setw(15) << std::left << result.at(1) << setw(4) << left << result.at(5) << "  copies in stock\n";
+        std::cout << std::setw(25) << left << result.at(0) << "by " << std::setw(15) << std::left << result.at(1) << setw(4) << left << result.at(5) <<std::setw(23)<<std::left<< "  copies in stock"<<setw(3)<<left<<"N " << setw(8) << result.at(4) << std::endl;
     }
        /* string substr;
         vector<string> result;
@@ -352,11 +412,6 @@ void Books::add_books() {
     out_file.close();
     display_menu();
 }
-
-//This is the most elaborated method in this code, although it is subject to review in the second version...
-//In this section, you can buy a book, or even add reviews to books...
-
-
 
 void Books::buy_book(std::string title) {
     string line{};
@@ -466,8 +521,6 @@ void Books::buy_book(std::string title) {
     rename("temp.txt", "record.txt");
 }
 
-
-
 void Books::edit_review(std::string title) {
     string line{};
     string title_val{}, author{}, review{}, publisher{}, price{}, copies{};
@@ -490,63 +543,123 @@ void Books::search_books() {
 
     search_title = capitalise(search_title);
 
+
     bool status = check_book(search_title);
+
     if (status == true) {
         std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Add a review\nOption: " << std::endl;
         std::cin >> choice;
         switch (choice) {
-        case '1':
-        {
-            buy_book(search_title);
-            display_menu();
-        }
-        break;
+            case '1':
+            {
+                buy_book(search_title);
+                display_menu();
+            }
+            break;
 
-        case '2':
-        {
-            edit_review(search_title);
-            display_menu();
-        }
-        break;
-        case '3':
-        {
-            read_review(search_title);
-            display_menu();
-        }
-        break;
-        default:
-        {
-            std::cout << "Kindly enter a valid option" << std::endl;
-        }
+            case '2':
+            {
+                edit_review(search_title);
+                display_menu();
+            }
+            break;
+            case '3':
+            {
+                read_review(search_title);
+                display_menu();
+            }
+            break;
+            default:
+            {
+                std::cout << "Kindly enter a valid option" << std::endl;
+            }
         }
     }
     else {
-        std::cout << search_title << " is not available" << std::endl;
-        std::cout << "1 - Home menu\n2 - Search another book\n3 - Quit application\n";
-        std::cout << "Option: ";
-        std::cin >> choice_q;
-        switch (choice_q) {
-        case '1':
+        vector <string> clue;
+        bool substr{ false };
+        clue = is_substr(search_title);
+
+        if (clue.size() > 0) {
+            substr = true;
+        }
+        else {
+            substr = false;
+        }
+        size_t choice_clue{};
+        char answer{};
+        //This is where the program pops out books with similar spelling and asks the user if he meant any of them
+        if (substr == true) {
+            std::cout << "Similar Matches: \n";
+            for (size_t i{ 0 }; i < clue.size(); i++) {
+                std::cout << i + 1 << " - " << clue.at(i) << std::endl;
+           }
+            std::cout << "Option: ";
+            std::cin >> choice_clue;
+            size_t pos = choice_clue - 1;
+            search_title = clue.at(pos);
+            system("CLS");
+            std::cout << "What would you like to do?\n";
+            std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Add a review\nOption: " << std::endl;
+            std::cout << "Option: ";
+            std::cin >> answer;
+
+            switch (answer) {
+            case '1':
             {
-            display_menu();
+                buy_book(search_title);
+                display_menu();
             }
             break;
 
-        case '2':
+            case '2':
             {
-            search_books();
+                edit_review(search_title);
+                display_menu();
             }
             break;
-        case '3':
+            case '3':
             {
-            quit();
+                read_review(search_title);
+                display_menu();
             }
             break;
-        default:
+            default:
             {
-            std::cout << "Kindly enter a valid option";
+                std::cout << "Kindly enter a valid option" << std::endl;
+            }
             }
         }
+
+        else {
+            std::cout << search_title << " is not available" << std::endl;
+            std::cout << "1 - Home menu\n2 - Search another book\n3 - Quit application\n";
+            std::cout << "Option: ";
+            std::cin >> choice_q;
+            switch (choice_q) {
+            case '1':
+            {
+                display_menu();
+            }
+            break;
+
+            case '2':
+            {
+                search_books();
+            }
+            break;
+            case '3':
+            {
+                quit();
+            }
+            break;
+            default:
+            {
+                std::cout << "Kindly enter a valid option";
+            }
+            }
+        }
+       
     }
 }
 
