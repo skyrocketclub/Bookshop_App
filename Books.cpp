@@ -11,11 +11,6 @@
 using namespace std;
 
 /*
-* Order of things to work on
-* 
-* 2. Let the book titles be displayed in an alphabetical order
-* 1. Work on developing the search book function, the buy book, and the view review and the add review
-* 3. Work on the option where the program shows the similar book titles upon search, where the user can easily select book of choice
 * 
 * 
         IMPLEMENTATION OF THE DATABASE USING FSTREAM FOR FILE HANDLING
@@ -523,12 +518,148 @@ void Books::buy_book(std::string title) {
 
 void Books::edit_review(std::string title) {
     string line{};
-    string title_val{}, author{}, review{}, publisher{}, price{}, copies{};
+    string title_val{}, author{}, review{}, publisher{}, price{}, copies{}, new_review{};
+
+
+    ifstream in_file;
+
+    in_file.open("record.txt");
+    if (!in_file) {
+        cerr << "Error Opening file" << endl;
+    }
+
+    while (std::getline(in_file, line)) {
+
+        stringstream s_stream(line);
+        string substr;
+        vector<string> result;
+
+        while (s_stream.good()) {
+            std::getline(s_stream, substr, ',');
+            result.push_back(substr);
+        }
+        title_val = result.at(0);
+        author = result.at(1);
+        review = result.at(2);
+        publisher = result.at(3);
+        price = result.at(4);
+        copies = result.at(5);
+
+        //Now the user has told you how many books that he wants to add...
+        if (title_val == title) {
+            std::cout << "Current review: " << result.at(2) << std::endl;
+            std::cout << "New review: ";
+            std::cin.ignore(1, '\n');
+            std::getline(std::cin, new_review);
+            break;
+        }
+    }
+
+    ofstream out_file("temp.txt");
+    if (!out_file) {
+        cerr << "Error opening file" << endl;
+    }
+
+    in_file.seekg(0, ios::beg);
+
+    while (std::getline(in_file, line)) {
+
+        stringstream s_stream(line);
+        string substr;
+        vector<string> result;
+
+        while (s_stream.good()) {
+            std::getline(s_stream, substr, ',');
+            result.push_back(substr);
+        }
+        title_val = result.at(0);
+        author = result.at(1);
+        review = result.at(2);
+        publisher = result.at(3);
+        price = result.at(4);
+        copies = result.at(5);
+
+        if (title_val != title) {
+            out_file << line << endl;
+        }
+        else {
+            for (size_t i{ 0 }; i < 6; i++) {
+                if (i == 2) {
+                    out_file << new_review << ",";
+                }
+                else {
+                    out_file << result.at(i) << ",";
+                }
+            }
+            
+        }
+    }
+    std::cout << "Review has been updated Successfully!" << std::endl; 
+
+    in_file.close();
+    out_file.close();
+    std::remove("record.txt");
+    std::rename("temp.txt", "record.txt");
 }
 
 void Books::read_review(std::string title) {
     string line{};
     string title_val{}, author{}, review{}, publisher{}, price{}, copies{};
+    char choice{};
+
+    ifstream in_file;
+
+    in_file.open("record.txt");
+    if (!in_file) {
+        cerr << "Error Opening file" << endl;
+    }
+
+    while (std::getline(in_file, line)) {
+
+        stringstream s_stream(line);
+        string substr;
+        vector<string> result;
+
+        while (s_stream.good()) {
+            std::getline(s_stream, substr, ',');
+            result.push_back(substr);
+        }
+        title_val = result.at(0);
+        author = result.at(1);
+        review = result.at(2);
+        publisher = result.at(3);
+        price = result.at(4);
+        copies = result.at(5);
+
+        //Now the user has told you how many books that he wants to add...
+        if (title_val == title) {
+            std::cout << "Review: " << result.at(2) << std::endl<<std::endl;
+           
+            break;
+        }
+    }
+    
+    in_file.close();
+    std::cout << "Would you like to edit the review?\n1 - Yes\n2 - No\nOption: ";
+    std::cin >> choice;
+    switch (choice) {
+        case '1':
+        {
+            edit_review(title);
+        }
+        break;
+
+        case'2':
+        {
+
+        }
+        break;
+        default:
+        {
+            std::cout << "Invalid Option!";
+            read_review(title);
+        }
+    }
 }
 
 void Books::search_books() {
@@ -547,7 +678,7 @@ void Books::search_books() {
     bool status = check_book(search_title);
 
     if (status == true) {
-        std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Add a review\nOption: " << std::endl;
+        std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Read review\nOption: " << std::endl;
         std::cin >> choice;
         switch (choice) {
             case '1':
@@ -600,7 +731,7 @@ void Books::search_books() {
             search_title = clue.at(pos);
             system("CLS");
             std::cout << "What would you like to do?\n";
-            std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Add a review\nOption: " << std::endl;
+            std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Read review" << std::endl;
             std::cout << "Option: ";
             std::cin >> answer;
 

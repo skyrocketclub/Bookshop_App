@@ -1,3 +1,1 @@
-OLIVER, ,No reviews yet , ,5000,5
-HUNGRY, ,No reviews yet , ,8000,3
-AVATAR,AANG,No reviews yet , ,70,1
+OLIVER, ,It is about the story of a boy who always wanted more..., ,5000,5,AVATAR,AANG,No reviews yet , ,70,1
