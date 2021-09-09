@@ -10,6 +10,7 @@
  *
  * 1.  Have a digital Inventory of all books currently available in your store (the titles and the number)
  * 2.  Add reviews to each of the books to aid customers make a choice...
+ * 3.  The data for the app is stored in a .txt file automatically created by the app...
  *
  * */
 #include <iostream>

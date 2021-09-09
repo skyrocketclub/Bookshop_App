@@ -10,31 +10,7 @@
 
 using namespace std;
 
-/*
-* 
-* 
-        IMPLEMENTATION OF THE DATABASE USING FSTREAM FOR FILE HANDLING
-    The fucntions where files will be accessed are as follows:
-    
-   (1) add_books-->( In this place you are editing the record
-   (2) search_book 
-   (3a)    Buy a Book--> You are editing the record in this place too(number of books)
-   (3b)   Add a comment for a book--> You are also editing the record in this case...
-   (4) list_books-->Here you simply display all books...
-
-    Order in which info is stored in the file:
-
-    std::vector<std::string> title{ " " };
-    std::vector<std::string> author{ " " };
-    std::vector<std::string> reviews{ " " };
-    std::vector<std::string> publisher{ " " };
-    std::vector<double>price{ 0.00 };
-    std::vector<int> copies{ 0 };
-    std::vector<int> position{ 0 };
-*/
-//All the methods that were defined in the public section are expounded upon here...
-//This method is the key to the other methods and it displays the possible operations in the home screen anytime it is called
-
+//This method checks if a book is available
 bool Books::check_book(string title) {
 
     string title_val{""};
@@ -80,6 +56,7 @@ bool Books::check_book(string title) {
     return status;
 }
 
+//This method is called when the book the user wants to add already exists. (only copies is updated)
 void Books::update_copies(string title) {
     string title_val;
     string author;
@@ -88,6 +65,9 @@ void Books::update_copies(string title) {
     string line;
     string price;
     string copies;
+    //For Data validation
+    bool done{ false };
+    std::string entry{};
     int copies_to_add{};
 
 
@@ -118,8 +98,18 @@ void Books::update_copies(string title) {
         //Now the user has told you how many books that he wants to add...
         if (title_val == title) {
             std::cout << copies << " copies of " << title_val << " are in stock..." << endl;
-            std::cout << "How many copies would you like to add?: ";
-            std::cin >> copies_to_add;
+            do {
+                std::cout << "How many copies would you like to add?: ";
+                std::cin >> entry;
+                std::stringstream validator{ entry };
+                if (validator >> copies_to_add) {
+                    done = true;
+                }
+                else {
+                    std::cout << "Kindly enter an integer" << std::endl;
+                    std::cin.ignore(std::numeric_limits <std::streamsize> ::max(), '\n');
+                }
+            } while (!done);
             break;
         }
     }
@@ -168,6 +158,7 @@ void Books::update_copies(string title) {
     std::rename("temp.txt", "record.txt");
 }
 
+//This is the function that shows the books with similar titles upon search
 std::vector <std::string> Books::is_substr(std::string search_title) {
         
     string title_val;
@@ -288,8 +279,8 @@ void Books::list_books() {
         cerr << "Error opening file" << endl;
     }
 
-    cout << setw(10) << "BOOK TITLE" << setw(21) << "AUTHOR" << setw(33) << "COPIES IN STOCK" << setw(13)<<"PRICE" << endl;
-    std::cout << "==============================================================================="<<std::endl;
+    std::cout << std::setw(25)<<std::left << "BOOK TITLE" << std::setw(28) << "AUTHOR" << setw(27) << "COPIES IN STOCK" << setw(16)<<"PRICE" << endl;
+    std::cout << "========================================================================================"<<std::endl;
                   
                   
     while (std::getline(in_file, line)) {
@@ -317,36 +308,38 @@ void Books::list_books() {
             std::getline(s_stream, substr, ',');
             result.push_back(substr);
         }
-        std::cout << std::setw(25) << left << result.at(0) << "by " << std::setw(15) << std::left << result.at(1) << setw(4) << left << result.at(5) <<std::setw(23)<<std::left<< "  copies in stock"<<setw(3)<<left<<"N " << setw(8) << result.at(4) << std::endl;
+        std::cout << std::setw(25) << left << result.at(0) << "by " << std::setw(25) << std::left << result.at(1) << setw(3) << left << result.at(5) <<std::setw(23)<<std::left<< "  copies in stock"<<setw(2)<<left<<"N " << setw(8) << result.at(4) << std::endl;
     }
-       /* string substr;
-        vector<string> result;
-     
-        while (s_stream.good()) {
-            std::getline(s_stream, substr, ',');
-            result.push_back(substr);
-        }
-        std::cout << std::setw(25) << left << result.at(0) << "by " << std::setw(15) << std::left << result.at(1) << setw(4)<<left << result.at(5) << "  copies in stock\n";  
-    */
     in_file.close();
     display_menu();
 }
 
 //This method when called opens up to part of the code that allows you to add new books or more copies of already existing books to the collection
 void Books::add_books() {
-    bool instock{};
+    bool instock{}, done{ false }, done_price{ false };
     int num{ 0 }, copies_val{ 0 }, counts{ 0 }, copies_to_add{ 0 };
     double price_val{ 0.0 };
-    string title_val{}, author_val{}, publisher_val{};
+    string title_val{}, author_val{}, publisher_val{}, entry{};
     size_t q{ 0 };
 
     ofstream out_file("record.txt",ios::app);
     if (!out_file) {
         cerr << "error opening file" << endl;
     }
-    
-    std::cout << "How many books will you like to add:  ";
-    std::cin >> num;
+    do {
+        std::cout << "How many books will you like to add:  ";
+        std::cin >> entry;
+        std::istringstream validator{ entry };
+        if (validator >> num) {
+            done = true;
+        }
+        else {
+            std::cout << "Kindly enter a valid input" << std::endl;
+            std::cin.ignore(std::numeric_limits <std::streamsize> ::max(), '\n');
+        }
+
+    } while (!done);
+   
     std::cin.ignore(1, '\n');
     total_num += num;
 
@@ -387,16 +380,40 @@ void Books::add_books() {
             std::getline(std::cin, publisher_val);
             publisher.push_back(publisher_val);
             out_file << publisher_val << ","; //four
+            do {
+                std::cout << "Selling Price: N ";
+                std::cin >> entry;
+                istringstream price_validator{ entry };
+                if (price_validator >> price_val) {
+                    done_price = true;
+                }
+                else {
+                    std::cout << "Kindly enter a valid input" << std::endl;
+                    std::cin.ignore(std::numeric_limits <std::streamsize> ::max(), '\n');
+                }
 
-            std::cout << "Selling Price: N ";
-            std::cin >> price_val;
+            } while (!done_price);
+
+           
             price.push_back(price_val);
             std::cin.ignore(1, '\n');
             out_file << price_val <<",";//five
 
+            bool done_copy{ false };
+            do {
+                std::cout << "How many copies are you adding?: ";
+                std::cin >> entry;
+                istringstream copy_validator{ entry };
+                if (copy_validator >> copies_val) {
+                    done_copy = true;
+                } 
+                else{
+                    std::cout << "Kindly enter a valid input" << std::endl;
+                    std::cin.ignore(std::numeric_limits <std::streamsize> ::max(), '\n');
+                }
 
-            std::cout << "How many copies are you adding?: ";
-            std::cin >> copies_val;
+            } while (!done_copy);
+           
             copies.push_back(copies_val);
             std::cin.ignore(1, '\n');
             std::cout << endl;
@@ -442,8 +459,24 @@ void Books::buy_book(std::string title) {
             copy = stoi(copies);
             book_price = stoi(price);
             std::cout << "There are " << copies << " copies of " << title_val << " available" << std::endl;
-            std::cout << "How many copies would you like to buy?\nQuantity: ";
-            std::cin >> quantity;
+            
+            bool done_quantity{ false };
+            std::string entry;
+            do {
+                std::cout << "How many copies would you like to buy?\nQuantity: ";
+                std::cin >> entry;
+
+                istringstream quan_validator{ entry };
+                if (quan_validator >> quantity) {
+                    done_quantity = true;
+                }
+                else {
+                    std::cout << "Kindly enter a valid input" << std::endl;
+                    std::cin.ignore(std::numeric_limits <std::streamsize> ::max(), '\n');
+                }
+            } while (!done_quantity);
+
+            
             total_cost = quantity * book_price;
 
             if (copy >= quantity) {
@@ -457,8 +490,11 @@ void Books::buy_book(std::string title) {
                     std::cout << "Thanks for your patronage!" << std::endl;
                 }
                 else if (buy == '0') {
+                    remainder = copy; 
+                }
+                else {
+                    std::cout << "You entered an invalid input" << std::endl;
                     remainder = copy;
-                    
                 }
             }
             else {
@@ -512,8 +548,8 @@ void Books::buy_book(std::string title) {
     }
     in_file.close();
     out_file.close();
-    remove("record.txt");
-    rename("temp.txt", "record.txt");
+    std::remove("record.txt");
+    std::rename("temp.txt", "record.txt");
 }
 
 void Books::edit_review(std::string title) {
@@ -678,7 +714,7 @@ void Books::search_books() {
     bool status = check_book(search_title);
 
     if (status == true) {
-        std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Read review\nOption: " << std::endl;
+       retry: std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Read review\nOption: " << std::endl;
         std::cin >> choice;
         switch (choice) {
             case '1':
@@ -703,6 +739,7 @@ void Books::search_books() {
             default:
             {
                 std::cout << "Kindly enter a valid option" << std::endl;
+                goto retry;
             }
         }
     }
@@ -731,7 +768,7 @@ void Books::search_books() {
             search_title = clue.at(pos);
             system("CLS");
             std::cout << "What would you like to do?\n";
-            std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Read review" << std::endl;
+            retry_1:  std::cout << "1 - Buy Book\n2 - Edit Review\n3 - Read review" << std::endl;
             std::cout << "Option: ";
             std::cin >> answer;
 
@@ -758,13 +795,14 @@ void Books::search_books() {
             default:
             {
                 std::cout << "Kindly enter a valid option" << std::endl;
+                goto retry_1;
             }
             }
         }
 
         else {
             std::cout << search_title << " is not available" << std::endl;
-            std::cout << "1 - Home menu\n2 - Search another book\n3 - Quit application\n";
+            retry_2: std::cout << "1 - Home menu\n2 - Search another book\n3 - Quit application\n";
             std::cout << "Option: ";
             std::cin >> choice_q;
             switch (choice_q) {
@@ -787,6 +825,7 @@ void Books::search_books() {
             default:
             {
                 std::cout << "Kindly enter a valid option";
+                goto retry_2;
             }
             }
         }
@@ -815,16 +854,8 @@ string Books::capitalise(string input) {
 *                                 THINGS TO IMPLEMENT IN THE NEXT VERSION OF "THE BOOKSHOP APP"
 * 1.  I can search for books using :the author-----the title--------the book number: and the same options of buying or reviewing
 * the book come up
-* 2.  After i see that the number of books are not enough, the user can be given options to either
-*             Buy a different number of units
-*             Search for another book
-*             return to home
-* 3. Implement exception handling for all the places where the user has to enter input... And test all
-* 4. Extract a method called SEARCH  and have another method called BUY that have tailored and specific functions
 * 5. Expound on the buying  method keeping in mind that a customer can want to buy more than one book at once and this
 *     is often the case...
 * 6. Create a feature that alerts the librarian on the Books that are currently getting out of stock or that are out of stock completely...
 * 7. Have an option at all aspects of the program that enable the user to go back
-* 8. Have an option where you can output the total sales of the day
-* 9. When searching for the book, try to make it easier for the user to put in some part of the title...
 * */
