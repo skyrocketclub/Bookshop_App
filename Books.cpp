@@ -270,45 +270,50 @@ void Books::display_menu() {
 
 //THis method simpply gets a list of all the books currently in stock. It also states how many books are in stock
 void Books::list_books() {
-    
+    int book_count{0};
     string line, temp;
     vector <string> lines;
     string title_val, author, review, publisher, price, copies;
     ifstream in_file("record.txt");
     if (!in_file) {
-        cerr << "Error opening file" << endl;
+        cerr << "You have an empty stock, kindly add books first" << endl;
     }
+    else {
+       
 
-    std::cout << std::setw(25)<<std::left << "BOOK TITLE" << std::setw(28) << "AUTHOR" << setw(27) << "COPIES IN STOCK" << setw(16)<<"PRICE" << endl;
-    std::cout << "========================================================================================"<<std::endl;
-                  
-                  
-    while (std::getline(in_file, line)) {
-        lines.push_back(line);
-    }
+        while (std::getline(in_file, line)) {
+            lines.push_back(line);
+            book_count++;
+        }
 
-    size_t l = lines.size();
-    //The strings are arranged in a vector ready to be outputed
-    for (size_t i{ 0 };i < l; i++) {
-        for (size_t j{ i + 1 };j < l; j++) {
-            if (lines.at(i) > lines.at(j)) {
-                temp = lines.at(i);
-                lines.at(i) = lines.at(j);
-                lines.at(j) = temp;
+        if (book_count == 0) {
+            std::cout << "You have no book in stock" << std::endl;
+        }
+        else {
+            size_t l = lines.size();
+            //The strings are arranged in a vector ready to be outputed
+            for (size_t i{ 0 };i < l; i++) {
+                for (size_t j{ i + 1 };j < l; j++) {
+                    if (lines.at(i) > lines.at(j)) {
+                        temp = lines.at(i);
+                        lines.at(i) = lines.at(j);
+                        lines.at(j) = temp;
+                    }
+                }
+            }
+
+            for (size_t k{ 0 }; k < lines.size(); k++) {
+                stringstream s_stream(lines.at(k));
+                string substr;
+                vector<string> result;
+
+                while (s_stream.good()) {
+                    std::getline(s_stream, substr, ',');
+                    result.push_back(substr);
+                }
+                std::cout << std::setw(25) << left << result.at(0) << "by " << std::setw(25) << std::left << result.at(1) << setw(3) << left << result.at(5) << std::setw(23) << std::left << "  copies in stock" << setw(2) << left << "N " << setw(8) << result.at(4) << std::endl;
             }
         }
-    }
-
-    for (size_t k{ 0 }; k < lines.size(); k++) {
-        stringstream s_stream(lines.at(k));
-        string substr;
-        vector<string> result;
-
-        while (s_stream.good()) {
-            std::getline(s_stream, substr, ',');
-            result.push_back(substr);
-        }
-        std::cout << std::setw(25) << left << result.at(0) << "by " << std::setw(25) << std::left << result.at(1) << setw(3) << left << result.at(5) <<std::setw(23)<<std::left<< "  copies in stock"<<setw(2)<<left<<"N " << setw(8) << result.at(4) << std::endl;
     }
     in_file.close();
     display_menu();
